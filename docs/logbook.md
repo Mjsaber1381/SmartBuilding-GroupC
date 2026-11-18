@@ -30,3 +30,8 @@
 - Real serial output and delivery evidence are kept locally in `C/Week06_Exports/Live_2026-11-18`; credentials, compiled firmware and full-flash backups are excluded from the repository.
 - Dashboard read preflight returned HTTP 403 with `{"error":"Origin not allowed"}` for `https://mjsaber1381.github.io`. Browser data access is not verified; TA origin approval and a separate dashboard access code are still required.
 - Lab Wi-Fi at the lab, deliberate offline/restart experiments and the 30-minute integrated test remain unverified.
+
+## Dashboard origin approval, 2026-11-18
+
+- Rechecked after the TA's server update: the read API now returns HTTP 204 for the Pages-origin preflight, with the exact allowed origin, POST/OPTIONS methods and required headers.
+- The separate Group C dashboard access code is still needed to verify authenticated reads.

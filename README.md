@@ -99,10 +99,11 @@ The final short check produced three real records, each saved locally,
 acknowledged over verified HTTPS, and removed from the queue after ACK.
 The lab Wi-Fi profile is configured but has not been checked at that location.
 
-The dashboard is published, but live browser access remains blocked by the
-read API's HTTP 403 `Origin not allowed` response. The TA must allow
-`https://mjsaber1381.github.io` and privately provide the Group C dashboard
-access code. See `docs/TA_CONNECTION.md` for the handoff details.
+The dashboard is published. The read API now allows the origin
+`https://mjsaber1381.github.io`: its preflight returns HTTP 204 with the
+matching origin and required POST/header permissions. Authenticated live
+data access still needs the separate Group C dashboard access code.
+See `docs/TA_CONNECTION.md` for the connection details.
 
 The 30-minute run, deliberate outage/restart experiments and scientific
 report remain pending. Extended laboratory tests were deferred at the
