@@ -15,6 +15,5 @@
 - JavaScript syntax check passed.
 - Pending: Wi-Fi configuration, flash backup/provisioning/upload, actual cloud ACKs and live dashboard access.
 - Extended laboratory tests and scientific evidence collection were deferred by the owner.
-- GitHub repository created at https://github.com/Mjsaber1381/SmartBuilding-GroupC (private, empty).
-- Upload and Pages setup are pending: GitHub connector unavailable; native browser helper returned an unrelated application screen after recovery.
-- Owner subsequently made the repository public. Git authentication is now available for Mjsaber1381; publishing uses Git and the GitHub API, with main /docs as the Pages source.
+- Full source pushed to the public repository https://github.com/Mjsaber1381/SmartBuilding-GroupC using Git authenticated as Mjsaber1381.
+- GitHub Pages configured through the GitHub API: branch main, directory /docs, HTTPS enforced. Updates to the publishing source trigger deployment.
