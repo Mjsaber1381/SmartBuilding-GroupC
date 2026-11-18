@@ -62,8 +62,8 @@ enum `DISABLED` is named `TOKEN_MISSING` to avoid the ESP32 GPIO macro.
 
 ## Dashboard
 
-Publish branch `main`, folder `/docs`, through GitHub Pages.
-Expected URL: https://Mjsaber1381.github.io/SmartBuilding-GroupC/
+GitHub Pages publishing source: branch `main`, folder `/docs`.
+Dashboard URL: https://Mjsaber1381.github.io/SmartBuilding-GroupC/
 
 The dashboard calls the instructor's `read-group-data` endpoint. Enter the
 separate dashboard access code in the page; it remains in memory for that
