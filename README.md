@@ -101,9 +101,12 @@ The lab Wi-Fi profile is configured but has not been checked at that location.
 
 The dashboard is published. The read API now allows the origin
 `https://mjsaber1381.github.io`: its preflight returns HTTP 204 with the
-matching origin and required POST/header permissions. Authenticated live
-data access still needs the separate Group C dashboard access code.
-See `docs/TA_CONNECTION.md` for the connection details.
+matching origin and required POST/header permissions. Authenticated `latest`
+and `recent` reads both returned HTTP 200 using the owner's private dashboard
+code. A fresh serial record and its ACK were captured, then the same UUID,
+timestamp and all sensor/uptime fields were matched in the dashboard API.
+The recent endpoint returned 60 records; the latest was eight seconds old
+during the final check. See `docs/TA_CONNECTION.md` for connection details.
 
 The 30-minute run, deliberate outage/restart experiments and scientific
 report remain pending. Extended laboratory tests were deferred at the

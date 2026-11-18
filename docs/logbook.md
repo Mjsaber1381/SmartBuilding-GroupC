@@ -35,3 +35,11 @@
 
 - Rechecked after the TA's server update: the read API now returns HTTP 204 for the Pages-origin preflight, with the exact allowed origin, POST/OPTIONS methods and required headers.
 - The separate Group C dashboard access code is still needed to verify authenticated reads.
+
+## Authenticated dashboard connection, 2026-11-18
+
+- Owner added the dashboard code to the private `C/.env` as `DASHBOARD_KEY_C`; the code was not written to dashboard source or committed.
+- Both authenticated read actions, `latest` and `recent`, returned HTTP 200 with the correct device ID and allowed origin.
+- The API returned 60 recent records. A new ESP32 record and its valid ingestion ACK were captured without resetting or reflashing the board.
+- Matched the fresh record's UUID, UTC timestamp, both temperature/RH pairs, illuminance, PIR and uptime exactly against the read response. Latest-record age was eight seconds during verification.
+- End-to-end acquisition, durable save, ingestion acknowledgment and authenticated dashboard data retrieval are verified. Interactive browser rendering was not controlled during this check; extended lab experiments remain pending as previously recorded.

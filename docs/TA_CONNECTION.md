@@ -15,10 +15,11 @@ The dashboard uses the read-only `read-group-data` Edge Function. Its preflight
 now returns HTTP 204 with `Access-Control-Allow-Origin` matching the site,
 allowed methods `POST,OPTIONS`, and headers `content-type,x-dashboard-key`.
 
-Remaining TA-side setup:
-
-Privately provide the Group C dashboard access code for the `x-dashboard-key` header.
+The Group C dashboard access code has now been provided privately. Both
+authenticated `latest` and `recent` reads returned HTTP 200. A fresh record
+captured from the ESP32 and acknowledged by ingestion was matched exactly
+against the read API by UUID, timestamp, sensor values and uptime.
 
 The ESP32 device token is already configured privately and must not be placed
-in dashboard code. Authenticated live data access remains to be verified after
-the dashboard access code is available.
+in dashboard code. Enter the separate dashboard access code in the published
+page and click **Connect**. The code remains in memory for that browser tab.
