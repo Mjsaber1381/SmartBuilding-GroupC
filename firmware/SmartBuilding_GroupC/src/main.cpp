@@ -9,9 +9,16 @@
 #include <ArduinoJson.h>
 #include <Adafruit_SHT31.h>
 #include <BH1750.h>
+#include "wifi_config.h"
 #include "secrets.h"
 #include "queue_manager.h"
 #include "cloud_client.h"
+
+// Existing single-network secrets.h files remain compatible.
+#ifndef WIFI_NETWORKS_CONFIGURED
+static const WiFiCredentials WIFI_NETWORKS[] = {{WIFI_SSID, WIFI_PASSWORD}};
+#endif
+constexpr size_t WIFI_NETWORK_COUNT = sizeof(WIFI_NETWORKS) / sizeof(WIFI_NETWORKS[0]);
 
 // Week 6: persist every timestamped record before HTTPS delivery.
 constexpr char DEVICE_ID[] = "ENV_GROUP_C_01";
@@ -41,6 +48,8 @@ uint32_t lastPirPoll = 0, lastRecord = 0, lastWiFiAttempt = 0;
 uint32_t lastSensorAttempt = 0;
 uint32_t pirWarmupStart = 0;
 uint32_t lastSerialKeepalive = 0;
+size_t nextWiFiNetwork = 0;
+bool wifiAttemptStarted = false;
 std::atomic<bool> clockEverSynchronized{false};
 
 String generateUUID() {
@@ -102,15 +111,32 @@ void initializeSensors() {
     sht1Ready ? "OK" : "FAIL", sht2Ready ? "OK" : "FAIL", lightReady ? "OK" : "FAIL");
 }
 
+bool hasConfiguredWiFi() {
+  for (const auto& network : WIFI_NETWORKS) {
+    if (network.ssid != nullptr && network.ssid[0] != '\0') return true;
+  }
+  return false;
+}
+
 void maintainWiFi() {
-  if (WIFI_SSID[0] == '\0') return;
-  if (WiFi.status() == WL_CONNECTED) return;
+  if (WiFi.status() == WL_CONNECTED) {
+    nextWiFiNetwork = 0;
+    return;
+  }
   uint32_t now = millis();
-  if (now - lastWiFiAttempt >= WIFI_RETRY_MS) {
+  if (wifiAttemptStarted && now - lastWiFiAttempt < WIFI_RETRY_MS) return;
+  for (size_t checked = 0; checked < WIFI_NETWORK_COUNT; ++checked) {
+    const size_t index = nextWiFiNetwork;
+    nextWiFiNetwork = (nextWiFiNetwork + 1) % WIFI_NETWORK_COUNT;
+    const auto& network = WIFI_NETWORKS[index];
+    if (network.ssid == nullptr || network.ssid[0] == '\0') continue;
     lastWiFiAttempt = now;
+    wifiAttemptStarted = true;
     WiFi.disconnect();
-    WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-    Serial.println("STATUS: WiFi reconnect requested");
+    WiFi.begin(network.ssid, network.password == nullptr ? "" : network.password);
+    Serial.printf("STATUS: WiFi connection requested for configured network %u\n",
+      static_cast<unsigned>(index + 1));
+    return;
   }
 }
 
@@ -241,13 +267,14 @@ void setup() {
     static_cast<unsigned long>(RECORD_INTERVAL_MS));
   if (!queueInit()) Serial.println("CRITICAL: LittleFS mount failed; provision data with uploadfs before use");
   else { queueRecover(); Serial.printf("RECOVERED_QUEUE_COUNT %u\n", (unsigned)queueCount()); }
-  if (WIFI_SSID[0] != '\0') {
+  if (hasConfiguredWiFi()) {
+    WiFi.persistent(false);
     WiFi.mode(WIFI_STA);
+    WiFi.setAutoReconnect(false); // The worker rotates through the configured list.
     sntp_set_time_sync_notification_cb(onTimeSync);
     configTime(0, 0, "pool.ntp.org", "time.google.com");
-    WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-    lastWiFiAttempt = millis();
-    Serial.println("STATUS: WiFi connection requested; awaiting NTP");
+    maintainWiFi();
+    Serial.println("STATUS: Awaiting WiFi and NTP; configured networks are tried in order");
   } else {
     Serial.println("STATUS: WiFi not configured; edit include/secrets.h and upload again");
   }

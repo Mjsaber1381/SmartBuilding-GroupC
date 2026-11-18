@@ -26,6 +26,16 @@ Wi-Fi configuration are excluded from Git. The existing local `secrets.h`
 already contains the device token from the private `C/.env` file; Wi-Fi
 fields intentionally remain blank for the owner to edit.
 
+Multiple locations are supported in the same `secrets.h`: set `WIFI_SSID`
+and `WIFI_PASSWORD` for the preferred network, then fill in additional
+SSID/password pairs in `WIFI_NETWORKS` for the lab, studio or a hotspot.
+Add more pairs to that list as needed. Empty names are skipped. The ESP32
+tries each configured network for 15 seconds, repeats the list when none
+connects, and stays on a connected network. After a disconnection it starts
+with the preferred network again. Rebuild and upload after changing the
+list; once both locations are configured, moving between them needs no
+further firmware changes. Existing single-network configs remain compatible.
+
 Build and upload firmware:
 
 ```text
