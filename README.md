@@ -24,7 +24,8 @@ Set `WIFI_SSID`, `WIFI_PASSWORD` and `DEVICE_TOKEN` there. Use a permitted
 2.4 GHz network; captive portals are not implemented. The device token and
 Wi-Fi configuration are excluded from Git. The existing local `secrets.h`
 already contains the device token from the private `C/.env` file; Wi-Fi
-fields intentionally remain blank for the owner to edit.
+profiles for home and the lab are configured locally. The example header
+contains blank fields for a new checkout; actual credentials are not published.
 
 Multiple locations are supported in the same `secrets.h`: set `WIFI_SSID`
 and `WIFI_PASSWORD` for the preferred network, then fill in additional
@@ -55,6 +56,9 @@ Before that, local sensor readings are printed but no UTC records are made.
 Each record is saved through a temporary file, read-back verification and
 rename before it can be sent. A separate network task prevents HTTPS waits
 from blocking normal PIR polling. Retries reuse the saved payload unchanged.
+Queue filenames encode all 128 UUID bits in a 22-character URL-safe form;
+the full `record_id` in the JSON remains unchanged. This keeps temporary
+filenames within the supplied filesystem image tool's 32-byte name limit.
 The active queue holds up to 2000 records, subject to actual flash capacity;
 existing unacknowledged data is never discarded to make room.
 
@@ -88,12 +92,22 @@ Differences are calculated in the browser and are not added to the database.
 
 ## Current validation status
 
-Firmware compilation and JavaScript syntax have been checked. Wi-Fi is not
-configured yet. The Week 6 firmware and filesystem have not been flashed.
-Cloud delivery, queue recovery on the board, the 30-minute run, network
-outage/restart experiments and the scientific report remain pending.
-Extended laboratory tests were deferred at the owner's request; this is
-not a claim that the assignment's experimental acceptance criteria passed.
+Firmware and LittleFS have been uploaded on COM6 after a verified full-flash
+backup. The current location's Wi-Fi connection, real NTP synchronization,
+both SHT31 sensors, BH1750, and valid PIR reporting after warm-up were checked.
+The final short check produced three real records, each saved locally,
+acknowledged over verified HTTPS, and removed from the queue after ACK.
+The lab Wi-Fi profile is configured but has not been checked at that location.
+
+The dashboard is published, but live browser access remains blocked by the
+read API's HTTP 403 `Origin not allowed` response. The TA must allow
+`https://mjsaber1381.github.io` and privately provide the Group C dashboard
+access code. See `docs/TA_CONNECTION.md` for the handoff details.
+
+The 30-minute run, deliberate outage/restart experiments and scientific
+report remain pending. Extended laboratory tests were deferred at the
+owner's request; the short deployment check does not establish all of the
+assignment's experimental acceptance criteria.
 
 See `docs/week06_group_c_schema_contract.md` for the data contract and
 `docs/logbook.md` for the implementation record.
