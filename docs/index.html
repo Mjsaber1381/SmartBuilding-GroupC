@@ -1,7 +1,96 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="referrer" content="no-referrer"><title>SmartBuilding | Group C Dashboard</title><link rel="stylesheet" href="styles.css"></head>
-<body><main class="shell"><header><div><p class="eyebrow">SMART BUILDING · SPATIAL ENVIRONMENTAL MONITORING</p><h1>Group C Dashboard</h1><p class="sub">Two-point temperature and relative humidity monitoring</p></div><span id="status" class="status">Not connected</span></header>
-<section class="panel connection"><div><label for="access">Group C dashboard access code</label><input id="access" type="password" autocomplete="off" placeholder="Code provided by your instructor"><small>Code stays in memory for this tab only. Never upload it to GitHub.</small></div><button id="connect" type="button">Connect</button><button id="disconnect" type="button" class="secondary" disabled>Disconnect</button></section><p id="message" class="message" role="status" aria-live="polite"></p>
-<section class="cards"><article class="metric"><span>Temperature T1</span><strong id="t1">—</strong><small>°C · SHT31 0x44 · bus 0</small></article><article class="metric"><span>Temperature T2</span><strong id="t2">—</strong><small>°C · SHT31 0x44 · bus 1</small></article><article class="metric"><span>Temperature difference (T2 − T1)</span><strong id="dt">—</strong><small>°C · signed</small></article><article class="metric"><span>Relative humidity RH1</span><strong id="rh1">—</strong><small>%RH</small></article><article class="metric"><span>Relative humidity RH2</span><strong id="rh2">—</strong><small>%RH</small></article><article class="metric"><span>Humidity difference (RH2 − RH1)</span><strong id="drh">—</strong><small>percentage points · signed</small></article><article class="metric"><span>Illuminance</span><strong id="lux">—</strong><small>lux · BH1750</small></article><article class="metric"><span>Motion in sampling interval</span><strong id="motion">—</strong><small>PIR · observed HIGH</small></article><article class="metric"><span>Last sample</span><strong id="sampletime" class="small-value">—</strong><small>Browser local time</small></article></section>
-<section class="chart-grid"><article class="panel chart"><div class="chart-heading"><h2>Temperature comparison</h2><span>T1 / T2 · °C</span></div><canvas id="chartTemp" role="img" aria-label="Temperature sensors comparison"></canvas></article><article class="panel chart"><div class="chart-heading"><h2>Temperature difference</h2><span>T2 − T1 · °C</span></div><canvas id="chartDT" role="img" aria-label="Temperature difference trend"></canvas></article><article class="panel chart"><div class="chart-heading"><h2>Humidity comparison</h2><span>RH1 / RH2 · %RH</span></div><canvas id="chartRH" role="img" aria-label="Relative humidity sensors comparison"></canvas></article><article class="panel chart"><div class="chart-heading"><h2>Humidity difference</h2><span>RH2 − RH1 · percentage points</span></div><canvas id="chartDRH" role="img" aria-label="Humidity difference trend"></canvas></article><article class="panel chart"><div class="chart-heading"><h2>Illuminance</h2><span>lux · BH1750</span></div><canvas id="chartLux" role="img" aria-label="Illuminance trend"></canvas></article><article class="panel chart"><div class="chart-heading"><h2>Motion history (PIR)</h2><span>1 = observed, 0 = not observed</span></div><canvas id="chartMotion" role="img" aria-label="PIR motion history"></canvas></article><article class="panel chart"><h2>Monitoring details</h2><div class="detail"><span>Device</span><b>ENV_GROUP_C_01</b></div><div class="detail"><span>Last recorded (UTC source)</span><b id="recorded">—</b></div><div class="detail"><span>Last received by server</span><b id="received">—</b></div><div class="detail"><span>Samples in chart</span><b id="count">0</b></div><p class="sub">Up to 60 recent samples. Missing or invalid readings are not treated as zero. No data export.</p></article></section>
-<footer><span>Group C · Read-only dashboard</span><span>Refresh every 30 seconds · Password required</span></footer></main><script src="app.js" defer></script></body></html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <meta name="theme-color" content="#f3f6f4">
+  <meta name="description" content="Compare two environmental sensing points. Live temperature, humidity, light and motion for SmartBuilding Group C.">
+  <title>Group C · Environmental dashboard</title>
+  <link rel="preload" href="assets/fonts/kode-mono-variable.ttf" as="font" type="font/ttf" crossorigin>
+  <link rel="stylesheet" href="styles.css?v=20261127">
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to readings</a>
+<svg class="icon-definitions" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></symbol>
+  <symbol id="i-trend" viewBox="0 0 24 24"><path d="M3 4v16h18M6 15l5-6 4 3 5-7"/></symbol>
+  <symbol id="i-table" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 10v10M3 15h18"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 8a8 8 0 0 0-14-2L3 9m0-6v6h6M4 16a8 8 0 0 0 14 2l3-3m0 6v-6h-6"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.4 1.4m11.2 11.2L19 19M5 19l1.4-1.4M17.6 6.4L19 5"/></symbol>
+  <symbol id="i-motion" viewBox="0 0 24 24"><circle cx="12" cy="12" r="2"/><path d="M7 7a7 7 0 0 0 0 10m10-10a7 7 0 0 1 0 10M4 4a11 11 0 0 0 0 16M20 4a11 11 0 0 1 0 16"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+  <symbol id="i-key" viewBox="0 0 24 24"><circle cx="8" cy="9" r="5"/><path d="m12 12 8 8m-5-5 3-3m0 6 3-3"/></symbol>
+</svg>
+<div class="app-layout">
+  <aside class="sidebar" aria-label="Dashboard navigation">
+    <a class="brand" href="#overview"><span class="brand-mark">C<span>·</span></span><span>SmartBuilding<small>Environmental sensing</small></span></a>
+    <div class="workspace-label">GROUP C WORKSPACE</div>
+    <nav class="navigation">
+      <a class="nav-link active" href="#overview"><svg class="icon"><use href="#i-grid"/></svg>Overview</a>
+      <a class="nav-link" href="#trends"><svg class="icon"><use href="#i-trend"/></svg>Sensor trends</a>
+      <a class="nav-link" href="#readings"><svg class="icon"><use href="#i-table"/></svg>Recent readings</a>
+    </nav>
+    <div class="sidebar-note">
+      <span class="sidebar-note-title">Two points. One room.</span>
+      <p>See how temperature and humidity differ between your sensing points.</p>
+      <div class="sampling-note"><span class="sampling-dot"></span>30-second sampling</div>
+    </div>
+    <div class="sidebar-footer"><span class="device-symbol"><span></span><span></span><span></span></span><div>ENV_GROUP_C_01<small>Group C sensor node</small></div></div>
+  </aside>
+  <main id="main" class="main">
+    <header class="topbar">
+      <div class="breadcrumbs"><span>Living lab</span><span class="breadcrumb-separator">/</span><span>Environmental monitoring</span></div>
+      <span id="today" class="today"></span>
+    </header>
+    <section id="overview" class="overview">
+      <div class="page-heading">
+        <div><p class="eyebrow">SPATIAL ENVIRONMENTAL MONITORING</p><h1>Environmental overview</h1><p class="page-description">Temperature, humidity, light and motion across two sensing points.</p></div>
+        <div class="heading-actions"><span id="status" class="status" role="status" aria-live="polite">Not connected</span><button id="refresh" class="icon-button" type="button" aria-label="Refresh readings" title="Refresh readings" disabled><svg class="icon"><use href="#i-refresh"/></svg></button></div>
+      </div>
+      <form id="connection-form" class="connection-panel" aria-describedby="access-help">
+        <div class="connection-intro"><span class="connection-icon"><svg class="icon"><use href="#i-key"/></svg></span><div><h2>Connect to your sensor</h2><p>Use your Group C access code to view readings.</p></div></div>
+        <div class="access-field"><label for="access">Dashboard access code</label><input id="access" type="password" autocomplete="off" placeholder="Enter access code" aria-describedby="access-help message"><small id="access-help">Kept in this tab only.</small></div>
+        <div class="connection-actions"><button id="connect" type="submit" class="button primary">Connect</button><button id="disconnect" type="button" class="button secondary" disabled>Disconnect</button></div>
+      </form>
+      <p id="message" class="message" role="status" aria-live="polite"></p>
+      <div class="overview-grid">
+        <section class="panel comparison-panel" aria-labelledby="comparison-title">
+          <div class="panel-heading"><div><p class="eyebrow">SIDE BY SIDE</p><h2 id="comparison-title">Two-point comparison</h2></div><span class="quiet-tag">SHT31 · T + RH</span></div>
+          <div class="comparison-grid">
+            <div class="point point-one"><div class="point-label"><span class="point-dot"></span>Point 1</div><div class="temperature-reading"><strong id="t1" class="reading">—</strong><span>°C</span></div><div class="humidity-reading"><span>Humidity</span><div><strong id="rh1" class="reading">—</strong><span>%RH</span></div></div></div>
+            <div class="difference-panel"><span class="difference-label">POINT 2 − POINT 1</span><div><strong id="dt" class="reading">—</strong><span>°C difference</span></div><div><strong id="drh" class="reading">—</strong><span>RH percentage points</span></div></div>
+            <div class="point point-two"><div class="point-label"><span class="point-dot"></span>Point 2</div><div class="temperature-reading"><strong id="t2" class="reading">—</strong><span>°C</span></div><div class="humidity-reading"><span>Humidity</span><div><strong id="rh2" class="reading">—</strong><span>%RH</span></div></div></div>
+          </div>
+          <div class="panel-footnote"><span class="comparison-key"><i></i>Point 1<i></i>Point 2</span><span>Signed differences, calculated from the same sample.</span></div>
+        </section>
+        <section class="panel ambient-panel" aria-labelledby="ambient-title">
+          <div class="panel-heading"><div><p class="eyebrow">SHARED CONDITIONS</p><h2 id="ambient-title">Around the room</h2></div></div>
+          <div class="ambient-reading"><span class="ambient-icon"><svg class="icon"><use href="#i-sun"/></svg></span><div><span class="metric-label">Illuminance</span><div class="ambient-value"><strong id="lux" class="reading">—</strong><span>lux</span></div></div></div>
+          <div class="ambient-reading"><span class="ambient-icon"><svg class="icon"><use href="#i-motion"/></svg></span><div><span class="metric-label">Motion in the last interval</span><strong id="motion" class="motion-value reading">—</strong></div></div>
+          <div class="last-sample"><svg class="icon"><use href="#i-clock"/></svg><div><span>Last sample · local time</span><strong id="sampletime">—</strong></div></div>
+        </section>
+      </div>
+    </section>
+    <section id="trends" class="trends" aria-labelledby="trends-title">
+      <div class="section-heading"><div><p class="eyebrow">CHANGE OVER TIME</p><h2 id="trends-title">Sensor trends</h2></div><span class="window-label">Latest <strong id="count">0</strong> samples<span> · </span>30-second refresh</span></div>
+      <div class="chart-grid">
+        <article class="panel chart"><div class="chart-heading"><h3>Temperature</h3><span>Two-point comparison · °C</span></div><canvas id="chartTemp" role="img" aria-label="Temperature at points 1 and 2 over time"></canvas></article>
+        <article class="panel chart difference-chart"><div class="chart-heading"><h3>Temperature difference</h3><span>T2 − T1 · °C</span></div><canvas id="chartDT" role="img" aria-label="Signed temperature difference over time"></canvas></article>
+        <article class="panel chart"><div class="chart-heading"><h3>Relative humidity</h3><span>Two-point comparison · %RH</span></div><canvas id="chartRH" role="img" aria-label="Relative humidity at points 1 and 2 over time"></canvas></article>
+        <article class="panel chart difference-chart"><div class="chart-heading"><h3>Humidity difference</h3><span>RH2 − RH1 · percentage points</span></div><canvas id="chartDRH" role="img" aria-label="Signed relative humidity difference over time"></canvas></article>
+        <article class="panel chart"><div class="chart-heading"><h3>Illuminance</h3><span>Room light level · lux</span></div><canvas id="chartLux" role="img" aria-label="Illuminance over time"></canvas></article>
+        <article class="panel chart"><div class="chart-heading"><h3>Motion history</h3><span>Detected / clear per interval</span></div><canvas id="chartMotion" role="img" aria-label="PIR motion history over time"></canvas></article>
+      </div>
+    </section>
+    <section id="readings" class="readings-section" aria-labelledby="readings-title">
+      <div class="section-heading"><div><p class="eyebrow">THE UNDERLYING READINGS</p><h2 id="readings-title">Recent samples</h2></div><span class="quiet-tag">Newest first</span></div>
+      <div class="panel table-panel"><div class="table-scroll" tabindex="0" role="region" aria-label="Recent sensor readings"><table><thead><tr><th scope="col">Sample time</th><th scope="col">T1 <span>°C</span></th><th scope="col">T2 <span>°C</span></th><th scope="col">ΔT <span>°C</span></th><th scope="col">RH1 <span>%</span></th><th scope="col">RH2 <span>%</span></th><th scope="col">Light <span>lux</span></th><th scope="col">Motion</th></tr></thead><tbody id="recent-rows"><tr><td colspan="8" class="table-empty">Connect your sensor to see recent readings here.</td></tr></tbody></table></div></div>
+    </section>
+    <section class="details-strip" aria-label="Monitoring details"><div><span>Device</span><strong>ENV_GROUP_C_01</strong></div><div><span>Recorded at · local time</span><strong id="recorded">—</strong></div><div><span>Received by server · local time</span><strong id="received">—</strong></div></section>
+    <footer class="footer"><span>SmartBuilding <span class="footer-dot">·</span> Group C</span><span>Read-only monitoring <span class="footer-dot">·</span> Missing readings stay missing.</span></footer>
+  </main>
+</div>
+<script src="app.js?v=20261127" defer></script>
+</body>
+</html>

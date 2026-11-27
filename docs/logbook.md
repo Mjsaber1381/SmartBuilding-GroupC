@@ -43,3 +43,10 @@
 - The API returned 60 recent records. A new ESP32 record and its valid ingestion ACK were captured without resetting or reflashing the board.
 - Matched the fresh record's UUID, UTC timestamp, both temperature/RH pairs, illuminance, PIR and uptime exactly against the read response. Latest-record age was eight seconds during verification.
 - End-to-end acquisition, durable save, ingestion acknowledgment and authenticated dashboard data retrieval are verified. Interactive browser rendering was not controlled during this check; extended lab experiments remain pending as previously recorded.
+
+## Dashboard redesign 2026-11-27
+
+- Reworked the dashboard into a light environmental monitoring interface with paired-point comparison, shared light/motion conditions, all six original trends, and a six-row recent-readings table.
+- Self-hosted the supplied Kode Mono variable font with its SIL Open Font License; retained the existing buildless GitHub Pages deployment and read API.
+- Checked actual authenticated data on desktop 1440 px and mobile 390 px, error/empty/loading states, disconnect/reset, chart gaps and absence of horizontal overflow. Access-code input clears after login; no localStorage or sessionStorage is used.
+- Controlled hardware outage/recovery and continuous online validation are being recorded separately on November 27 for the Week 5 and Week 6 reports.

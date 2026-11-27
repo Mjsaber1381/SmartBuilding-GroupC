@@ -81,6 +81,7 @@ const difference = (r, a, b) => {
 function status(text, css = '') {
   $('status').textContent = text;
   $('status').className = 'status ' + css;
+  document.body.dataset.state = css || 'offline';
 }
 
 function message(text) {
@@ -312,14 +313,15 @@ const charts = [
     id: 'chartTemp',
     lines: [
       {
-        label: 'T1',
+        label: 'Point 1',
         f: r => num(r.temperature_1_c),
-        color: '#18b7c5'
+        color: '#356d55'
       },
       {
-        label: 'T2',
+        label: 'Point 2',
+        dash: [5, 4],
         f: r => num(r.temperature_2_c),
-        color: '#f4c873'
+        color: '#6f8978'
       }
     ]
   },
@@ -333,7 +335,7 @@ const charts = [
           'temperature_1_c',
           'temperature_2_c'
         ),
-        color: '#eea1bd'
+        color: '#356d55'
       }
     ]
   },
@@ -341,14 +343,15 @@ const charts = [
     id: 'chartRH',
     lines: [
       {
-        label: 'RH1',
+        label: 'Point 1',
         f: r => num(r.humidity_1_rh),
-        color: '#18b7c5'
+        color: '#356d55'
       },
       {
-        label: 'RH2',
+        label: 'Point 2',
+        dash: [5, 4],
         f: r => num(r.humidity_2_rh),
-        color: '#8cb8ff'
+        color: '#6f8978'
       }
     ]
   },
@@ -362,7 +365,7 @@ const charts = [
           'humidity_1_rh',
           'humidity_2_rh'
         ),
-        color: '#eea1bd'
+        color: '#356d55'
       }
     ]
   },
@@ -372,7 +375,7 @@ const charts = [
       {
         label: 'Lux',
         f: r => num(r.illuminance_lux),
-        color: '#f4c873'
+        color: '#6f8978'
       }
     ]
   },
@@ -388,7 +391,7 @@ const charts = [
             : r.motion_detected === false
               ? 0
               : null,
-        color: '#b5e68a'
+        color: '#356d55'
       }
     ]
   }
@@ -445,13 +448,13 @@ function draw(cfg) {
     )
   );
 
-  c.font = '12px system-ui';
-  c.fillStyle = '#99b5c1';
+  c.font = '11px "Kode Mono", monospace';
+  c.fillStyle = '#6c8072';
 
   if (!valid.length) {
     c.textAlign = 'center';
     c.fillText(
-      'Waiting for readings',
+      accessCode ? 'No readings in this window' : 'Connect to view readings',
       w / 2,
       h / 2
     );
@@ -498,7 +501,7 @@ function draw(cfg) {
   // Grid and Y-axis
   c.textAlign = 'right';
   c.lineWidth = 1;
-  c.strokeStyle = '#315362';
+  c.strokeStyle = '#e4ebe6';
 
   for (let j = 0; j <= 4; j++) {
     const y = T + ph * j / 4;
@@ -511,7 +514,7 @@ function draw(cfg) {
     const tick =
       hi - (hi - lo) * j / 4;
 
-    c.fillStyle = '#99b5c1';
+    c.fillStyle = '#6c8072';
 
     c.fillText(
       tick.toFixed(
@@ -530,7 +533,8 @@ function draw(cfg) {
   for (const line of all) {
     c.strokeStyle = line.color;
     c.fillStyle = line.color;
-    c.lineWidth = 2.3;
+    c.lineWidth = 2.2;
+    c.setLineDash(line.dash || []);
 
     let segment = [];
 
@@ -572,6 +576,7 @@ function draw(cfg) {
       segment = [];
     };
 
+    let previousTime = null;
     for (const p of line.pts) {
       if (
         !Number.isFinite(p.t) ||
@@ -579,21 +584,29 @@ function draw(cfg) {
         !Number.isFinite(p.v)
       ) {
         flush();
+        previousTime = null;
         continue;
       }
 
+      // Never imply continuous measurement across a missing sampling period.
+      if (previousTime !== null && p.t - previousTime > 90000) flush();
       segment.push(p);
+      previousTime = p.t;
     }
 
     flush();
   }
 
+  c.setLineDash([]);
+
   // X-axis timestamps
   c.textAlign = 'left';
-  c.fillStyle = '#99b5c1';
+  c.fillStyle = '#6c8072';
 
   c.fillText(
-    new Date(tMin).toLocaleTimeString([], {
+    tMax - tMin > 86400000
+      ? new Date(tMin).toLocaleDateString([], {month: 'short', day: 'numeric'})
+      : new Date(tMin).toLocaleTimeString([], {
       hour: '2-digit',
       minute: '2-digit'
     }),
@@ -604,7 +617,9 @@ function draw(cfg) {
   c.textAlign = 'right';
 
   c.fillText(
-    new Date(tMax).toLocaleTimeString([], {
+    tMax - tMin > 86400000
+      ? new Date(tMax).toLocaleDateString([], {month: 'short', day: 'numeric'})
+      : new Date(tMax).toLocaleTimeString([], {
       hour: '2-digit',
       minute: '2-digit'
     }),
@@ -620,7 +635,7 @@ function draw(cfg) {
     c.fillStyle = line.color;
     c.fillRect(lx, T - 17, 10, 3);
 
-    c.fillStyle = '#c5dbe3';
+    c.fillStyle = '#617567';
     c.fillText(
       line.label,
       lx + 14,
@@ -637,6 +652,43 @@ function render() {
     String(rows.length);
 
   charts.forEach(draw);
+  const body = $('recent-rows');
+  if (body) {
+    body.replaceChildren();
+    if (!rows.length) {
+      const cell = document.createElement('td');
+      cell.colSpan = 8;
+      cell.className = 'table-empty';
+      cell.textContent = accessCode ? 'No samples found for this sensor.' : 'Connect your sensor to see recent readings here.';
+      const tr = document.createElement('tr');
+      tr.append(cell);
+      body.append(tr);
+    } else {
+      for (const row of rows.slice(-6).reverse()) {
+        const tr = document.createElement('tr');
+        const values = [
+          timeText(row.recorded_at),
+          fmt(row.temperature_1_c), fmt(row.temperature_2_c),
+          fmt(difference(row, 'temperature_1_c', 'temperature_2_c'), 2),
+          fmt(row.humidity_1_rh), fmt(row.humidity_2_rh),
+          fmt(row.illuminance_lux, 0),
+          row.motion_detected === true ? 'Detected' : row.motion_detected === false ? 'Clear' : '—'
+        ];
+        values.forEach((value, index) => {
+          const td = document.createElement('td');
+          if (index === 3) td.className = 'delta-cell';
+          if (index === 7) {
+            const pill = document.createElement('span');
+            pill.className = 'motion-pill' + (row.motion_detected === true ? ' detected' : '');
+            pill.textContent = value;
+            td.append(pill);
+          } else td.textContent = value;
+          tr.append(td);
+        });
+        body.append(tr);
+      }
+    }
+  }
 }
 
 // ============================================================
@@ -661,6 +713,8 @@ async function loadData(session, key) {
   if (inFlight) return false;
 
   inFlight = true;
+  if (!rows.length) document.body.classList.add('is-loading');
+  $('refresh').disabled = true;
 
   const controller = new AbortController();
   activeController = controller;
@@ -726,6 +780,8 @@ async function loadData(session, key) {
 
     if (session === sessionId) {
       inFlight = false;
+      document.body.classList.remove('is-loading');
+      $('refresh').disabled = !accessCode || connecting;
     }
   }
 }
@@ -778,6 +834,11 @@ async function connect() {
   }
 
   $('disconnect').disabled = false;
+  $('refresh').disabled = false;
+  $('connect').textContent = 'Connected';
+  $('connection-form').classList.add('is-connected');
+  document.querySelector('.connection-intro h2').textContent = 'Connected to Group C';
+  document.querySelector('.connection-intro p').textContent = 'Your readings update automatically every 30 seconds.';
 
   $('access').value = '';
   $('access').disabled = true;
@@ -829,7 +890,13 @@ function disconnect() {
   $('access').disabled = false;
 
   $('connect').disabled = false;
+  $('connect').textContent = 'Connect';
   $('disconnect').disabled = true;
+  $('refresh').disabled = true;
+  $('connection-form').classList.remove('is-connected');
+  document.body.classList.remove('is-loading');
+  document.querySelector('.connection-intro h2').textContent = 'Connect to your sensor';
+  document.querySelector('.connection-intro p').textContent = 'Use your Group C access code to view readings.';
 
   clearReadings();
   render();
@@ -842,24 +909,19 @@ function disconnect() {
 // Event Listeners
 // ============================================================
 
-$('connect').addEventListener(
-  'click',
-  connect
-);
-
-$('disconnect').addEventListener(
-  'click',
-  disconnect
-);
-
-$('access').addEventListener(
-  'keydown',
-  e => {
-    if (e.key === 'Enter') {
-      connect();
-    }
-  }
-);
+$('connection-form').addEventListener('submit', event => {
+  event.preventDefault();
+  connect();
+});
+$('disconnect').addEventListener('click', disconnect);
+$('refresh').addEventListener('click', refresh);
+document.querySelectorAll('.nav-link').forEach(link => {
+  link.addEventListener('click', () => {
+    document.querySelectorAll('.nav-link').forEach(item => item.classList.toggle('active', item === link));
+  });
+});
+if (document.fonts) document.fonts.ready.then(render);
+$('today').textContent = new Date().toLocaleDateString(undefined, {day:'2-digit',month:'short',year:'numeric'});
 
 window.addEventListener(
   'resize',

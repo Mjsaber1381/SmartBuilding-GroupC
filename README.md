@@ -89,6 +89,11 @@ allowed origin, hosting can work while live data access remains unavailable.
 The dashboard displays T1/T2, RH1/RH2, signed differences T2−T1 and RH2−RH1,
 illuminance, interval motion, recorded/received timestamps and freshness.
 Differences are calculated in the browser and are not added to the database.
+The November 27 interface uses a light comparison-first layout, a responsive
+recent-readings table and self-hosted Kode Mono. Its font license is included
+in `docs/assets/fonts/OFL.txt`. Charts break across missing sampling periods;
+missing values are never substituted with zero. Access-code handling remains
+in memory for the current tab only.
 
 ## Current validation status
 
