@@ -50,3 +50,16 @@
 - Self-hosted the supplied Kode Mono variable font with its SIL Open Font License; retained the existing buildless GitHub Pages deployment and read API.
 - Checked actual authenticated data on desktop 1440 px and mobile 390 px, error/empty/loading states, disconnect/reset, chart gaps and absence of horizontal overflow. Access-code input clears after login; no localStorage or sessionStorage is used.
 - Controlled hardware outage/recovery and continuous online validation are being recorded separately on November 27 for the Week 5 and Week 6 reports.
+
+## Extended hardware validation 2026-11-27
+
+- Used an isolated diagnostic copy to pause/resume Wi-Fi and perform a controlled restart; production firmware source was not modified and LittleFS was not formatted.
+- The first planned outage ended early because the diagnostic pause flag did not survive restart. It is not counted as the 600-second pass. The restart nevertheless recovered all 19 pending records with exact cloud matches.
+- A second uninterrupted outage lasted 600 seconds and generated 20 real records. All were later acknowledged and matched by UUID, timestamp and values. The highest observed backlog was 32 records; this was not a filesystem-capacity test.
+- A separate uninterrupted online window lasted 1805.125 seconds and yielded 60 records, with intervals 29.998–30.002 seconds and 180 connected Wi-Fi status samples.
+- Across 105 readable diagnostic records and six restored-production records, all 111 traced UUIDs had valid ACK/delete evidence and exact authenticated cloud matches. Four pre-existing queued records were also acknowledged. The raw UART has one missing/corrupted QUEUED marker and other garbled diagnostic lines; no claim is made that UART observation independently counts every possible emitted record.
+- All five environmental channels were non-null in the 60-record online window. PIR was null in 32 intervals; production recheck had two valid false values and four nulls, including two after warm-up. Continuous PIR coverage remains unresolved and is explicitly reported.
+- Generated 48 valid, unique hardware UUID-v4 values across two boots. A bad-auth request returned 401; replay of one unchanged real record returned 200 and the read API showed a single matching ID. Direct SQL verification was not performed.
+- Recorded ten adjacent-sensor pairs at the owner's confirmed approximate 0.90 m height: mean T2−T1 +0.028 °C, temperature MAE 0.030 °C; mean RH2−RH1 +0.180 percentage points, humidity MAE 0.332 percentage points. This describes pair agreement, not absolute calibration. The owner could not separate the sensors for the second placement test.
+- Restored the original production application, SHA-256 `44d0233276396f6a58606eb42eedc3e6bcec7a60173be5bf3bd69331d956f67c`; uploader hash verification and six fresh cloud ACKs passed. Partition layout and queue were preserved.
+- Report-safe evidence is held locally in `C/Week06_Exports/Validation_2026-11-27`. Private diagnostic configuration and compiled binaries are excluded from public source and report delivery.

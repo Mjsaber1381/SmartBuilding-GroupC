@@ -97,7 +97,7 @@ in memory for the current tab only.
 
 ## Current validation status
 
-Firmware and LittleFS have been uploaded on COM6 after a verified full-flash
+The November 18 firmware and LittleFS deployment used COM6 after a verified full-flash
 backup. The current location's Wi-Fi connection, real NTP synchronization,
 both SHT31 sensors, BH1750, and valid PIR reporting after warm-up were checked.
 The final short check produced three real records, each saved locally,
@@ -113,10 +113,28 @@ timestamp and all sensor/uptime fields were matched in the dashboard API.
 The recent endpoint returned 60 records; the latest was eight seconds old
 during the final check. See `docs/TA_CONNECTION.md` for connection details.
 
-The 30-minute run, deliberate outage/restart experiments and scientific
-report remain pending. Extended laboratory tests were deferred at the
-owner's request; the short deployment check does not establish all of the
-assignment's experimental acceptance criteria.
+Additional hardware validation was completed on November 27. A separate
+uninterrupted Wi-Fi-active window lasted 1805.125 seconds and produced 60
+readable records at 29.998–30.002-second intervals. All five environmental
+channels were valid. A controlled 600-second outage generated 20 records,
+all subsequently delivered with their original IDs, timestamps and values.
+A separate restart recovered and delivered 19 pending records. All 111
+traced records across the diagnostic and production checks received ACKs
+and matched authenticated cloud data exactly. One `QUEUED` UART marker was
+corrupted, so observed marker counts are distinguished from record counts.
+
+PIR validation remains partial: 32 of the 60 online-window records were
+correctly marked null after polling gaps. The restored production firmware
+also showed two post-warm-up null intervals. These are unknown measurements,
+not confirmed absence of motion. Production firmware was restored without
+changing its source or erasing the queue, and six fresh ACKs were verified.
+
+A ten-pair side-by-side comparison was recorded with the owner confirming
+the sensors were adjacent, at the same approximate 0.90 m height and away
+from heat. Separate-location testing, a physical unplug/bus-fault test,
+full-filesystem capacity measurement, direct SQL inspection and verification
+of the lab Wi-Fi at that location remain unperformed. The reports distinguish
+these limitations from the completed acquisition and cloud-delivery checks.
 
 See `docs/week06_group_c_schema_contract.md` for the data contract and
 `docs/logbook.md` for the implementation record.
